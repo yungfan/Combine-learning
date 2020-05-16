@@ -26,10 +26,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var repasswordInfo: UIImageView!
     
     // 存储订阅者防止释放
-    var subscriptionUsername: AnyCancellable?
-    var subscriptionPassword: AnyCancellable?
-    var subscriptionRepassword: AnyCancellable?
-    var subscriptionAccount: AnyCancellable?
+    var cancellables: Set<AnyCancellable> = []
     
     // 三个输入框的Editing Changed，每次输入后进行赋值
     @IBAction func usernameChanged(_ sender: UITextField) {
@@ -48,23 +45,27 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         // 1.验证用户名合法
-        subscriptionUsername = validatedUsername.map{ $0 == nil }
+        validatedUsername.map{ $0 == nil }
             .receive(on: RunLoop.main)
             .assign(to: \.isHidden, on: usernameInfo)
+            .store(in: &cancellables)
         
         // 2.验证密码的合法性
-        subscriptionPassword = valiatedPassword.map{ $0 == nil }
+        valiatedPassword.map{ $0 == nil }
             .assign(to: \.isHidden, on: passwordInfo)
+            .store(in: &cancellables)
         
         // 3.验证两次数输入的密码是否一致
-        subscriptionRepassword = valiatedRepassword.map{ $0 == nil }
+        valiatedRepassword.map{ $0 == nil }
             .assign(to: \.isHidden, on: repasswordInfo)
+            .store(in: &cancellables)
         
         // 4.检查用户名和密码
-        subscriptionAccount = validatedAccount.map{ $0 != nil }
+        validatedAccount.map{ $0 != nil }
             .receive(on: RunLoop.main)
             // 使用 Assign 订阅者改变 UI 状态
             .assign(to: \.isEnabled, on: loginBtn)
+            .store(in: &cancellables)
     }
 }
 
